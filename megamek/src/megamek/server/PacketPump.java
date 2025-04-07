@@ -19,12 +19,13 @@ public class PacketPump implements Runnable{
             while (!server.getPacketQueue().isEmpty()) {
                 Server.ReceivedPacket rp = server.getPacketQueue().poll();
                 synchronized (server.getServerLock()) {
+                    assert rp != null;
                     server.handle(rp.getConnectionId(), rp.getPacket());
                 }
             }
 
             try {
-                synchronized (server.gePacketQueue()) {
+                synchronized (server.getPacketQueue()) {
                     server.getPacketQueue().wait();
                 }
             } catch (InterruptedException ignored) {
