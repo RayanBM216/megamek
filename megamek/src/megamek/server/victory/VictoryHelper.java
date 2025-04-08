@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import megamek.common.Game;
-import megamek.common.IGame;
 import megamek.common.options.OptionsConstants;
 import megamek.server.scriptedevent.TriggeredEvent;
 import megamek.server.scriptedevent.VictoryTriggeredEvent;
@@ -97,7 +96,7 @@ public class VictoryHelper implements Serializable {
      * @param context An optional context map (currently unused).
      * @return A {@link VictoryResult} representing the outcome of the scripted events.
      */
-    private VictoryResult checkVictoryScriptedEvents(Game game, Map<String, Object> context) {
+    public VictoryResult checkVictoryScriptedEvents(Game game, Map<String, Object> context) {
         // The game does end now; therefore, test all victory events. If none are met, the game is a draw
         for (TriggeredEvent event : game.scriptedEvents()) {
             if (event instanceof VictoryTriggeredEvent victoryEvent) {
@@ -120,7 +119,7 @@ public class VictoryHelper implements Serializable {
      * @param context An optional context map (currently unused).
      * @return A {@link VictoryResult} based on the configured victory conditions.
      */
-    private VictoryResult checkVictoryConditions(Game game, Map<String, Object> context) {
+    public VictoryResult checkVictoryConditions(Game game, Map<String, Object> context) {
         VictoryResult result = checkOptionalVictoryConditions(game, context);
         if (result.isVictory()) {
             return result;
