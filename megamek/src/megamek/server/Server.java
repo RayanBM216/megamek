@@ -117,38 +117,7 @@ public class Server implements Runnable {
         }
     }
 
-    private class PacketPump implements Runnable {
-        boolean shouldStop;
 
-        PacketPump() {
-            shouldStop = false;
-        }
-
-        void signalEnd() {
-            shouldStop = true;
-        }
-
-        @Override
-        public void run() {
-            while (!shouldStop) {
-                while (!packetQueue.isEmpty()) {
-                    ReceivedPacket rp = packetQueue.poll();
-                    synchronized (serverLock) {
-                        handle(rp.getConnectionId(), rp.getPacket());
-                    }
-                }
-
-                try {
-                    synchronized (packetQueue) {
-                        packetQueue.wait();
-                    }
-                } catch (InterruptedException ignored) {
-                    // If we are interrupted, just keep going, generally
-                    // this happens after we are signalled to stop.
-                }
-            }
-        }
-    }
 
     // commands
     private final Map<String, ServerCommand> commandsHash = new ConcurrentHashMap<>();
@@ -418,7 +387,7 @@ public class Server implements Runnable {
             registerCommand(command);
         }
 
-        packetPump = new PacketPump();
+        packetPump = new PacketPump(this);
         packetPumpThread = new Thread(packetPump, "Packet Pump");
         packetPumpThread.start();
 
@@ -447,6 +416,14 @@ public class Server implements Runnable {
 
     public IGameManager getGameManager() {
         return gameManager;
+    }
+
+    public Queue<ReceivedPacket> getPacketQueue() {
+        return packetQueue;
+    }
+
+    public Object getServerLock() {
+        return serverLock;
     }
 
     /**
