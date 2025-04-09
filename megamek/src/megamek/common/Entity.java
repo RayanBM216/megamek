@@ -6002,15 +6002,59 @@ public abstract class Entity extends TurnOrdered
      */
     public int calculateFreeC3MNodes() {
         int nodes = 0;
-        if (hasC3i() || hasNavalC3()) {
-            nodes = calculateCompleteC3Nodes();
-        } else if (hasC3M()) {
-            nodes = calculateC3MNodes();
-        } else if (hasActiveNovaCEWS()) {
-            nodes = calculateNovaCEWSNodes();
+        if (hasC3MM()) {
+            nodes = 2;
+            if (game != null) {
+                for (Entity e : game.getEntitiesVector()) {
+                    if (e.hasC3M() && (e != this)) {
+                        final Entity m = e.getC3Master();
+                        if (equals(m)) {
+                            nodes--;
+                        }
+                        if (nodes <= 0) {
+                            return 0;
+                        }
+                    }
+                }
+            }
+        } else if (hasC3M() && C3MasterIs(this)) {
+            nodes = 3;
+            if (game != null) {
+                for (Entity e : game.getEntitiesVector()) {
+                    if (e.hasC3() && (e != this)) {
+                        final Entity m = e.getC3Master();
+                        if (equals(m)) {
+                            nodes--;
+                        }
+                        if (nodes <= 0) {
+                            return 0;
+                        }
+                    }
+                }
+            }
         }
         return nodes;
     }
+
+    private int calculateNodesForNetwork(int initialNodes) {
+        int nodes = initialNodes;
+        if (game != null) {
+            for (Entity e : game.getEntitiesVector()) {
+                if (!equals(e) && onSameC3NetworkAs(e)) {
+                    nodes--;
+                    if (nodes <= 0) {
+                        return 0;
+                    }
+                }
+            }
+        }
+        return nodes;
+    }
+
+    private int calculateCompleteC3Nodes() {
+        return calculateNodesForNetwork(5);
+    }
+
 
     /**
      * Calculates the number of remaining C3 nodes for a C3M (C3 Master) connected to this <code>Entity</code>.
@@ -6021,15 +6065,15 @@ public abstract class Entity extends TurnOrdered
      *
      * @return a non-negative <code>int</code> value representing the remaining number of C3 nodes that can connect.
      */
-    public int calculateC3MNodes() {
-        int nodes = 3;
+    private int calculateC3MNodes() {
+        int nodes = calculateNodesForNetwork(3);
+        // Logique spécifique à C3M, comme la gestion des C3 Master et C3 Slave
         if (game != null) {
             for (Entity e : game.getEntitiesVector()) {
                 if (e.hasC3() && !equals(e)) {
-                    final Entity m = e.getC3Master();
+                    Entity m = e.getC3Master();
                     if (equals(m)) {
-                        // If this unit is a company commander, and has two C3 Master computers, only count C3
-                        // Slaves here.
+                        // Si cette entité est un commandant d'entreprise et possède deux C3 Master, seuls les C3 Slaves sont comptés
                         if (!C3MasterIs(this) || !hasC3MM() || e.hasC3S()) {
                             nodes--;
                         }
@@ -6043,52 +6087,12 @@ public abstract class Entity extends TurnOrdered
         return nodes;
     }
 
-    /**
-     * Calculates the number of remaining C3 nodes for an active Nova CEWS (Electronic Warfare System) connected to this <code>Entity</code>.
-     * <p>
-     * This method determines the remaining number of entities that can connect to this <code>Entity</code> through
-     * the Nova CEWS system. The count is decremented as entities sharing the same C3 network are found.
-     *
-     * @return a non-negative <code>int</code> value representing the remaining number of Nova CEWS nodes.
-     */
-    public int calculateNovaCEWSNodes() {
-        int nodes = 2;
-        if (game != null) {
-            for (Entity e : game.getEntitiesVector()) {
-                if (!equals(e) && onSameC3NetworkAs(e)) {
-                    nodes--;
-                    if (nodes <= 0) {
-                        return 0;
-                    }
-                }
-            }
-        }
-        return nodes;
+
+    private int calculateNovaCEWSNodes() {
+        return calculateNodesForNetwork(2);
     }
 
-    /**
-     * Calculates the number of remaining C3 nodes for a complete C3 network connected to this <code>Entity</code>.
-     * <p>
-     * This method assumes that the <code>Entity</code> is part of a complete C3 network and determines how many
-     * additional entities can connect to this one. The count is decremented as entities sharing the same network
-     * are found.
-     *
-     * @return a non-negative <code>int</code> value representing the remaining number of C3 nodes.
-     */
-    public int calculateCompleteC3Nodes(){
-        int nodes = 5;
-        if (game != null) {
-            for (Entity e : game.getEntitiesVector()) {
-                if (!equals(e) && onSameC3NetworkAs(e)) {
-                    nodes--;
-                    if (nodes <= 0) {
-                        return 0;
-                    }
-                }
-            }
-        }
-        return nodes;
-    }
+
 
     /**
      * Determine the remaining number of other C3 computers that can connect to this <code>Entity</code>.
